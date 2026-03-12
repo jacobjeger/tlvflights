@@ -140,9 +140,9 @@ export async function fetchElAlFlights(): Promise<Flight[]> {
     );
 
     for (const f of json.flightsFromIsrael) {
-      // Only include flights that explicitly have seats > 0
-      // seatCount === 0 means sold out, undefined/null means unknown
-      if (!f.seatCount || f.seatCount <= 0) {
+      // seatCount === 0 means explicitly sold out — skip those
+      // seatCount undefined/null means listed on seat availability page = available
+      if (f.seatCount === 0) {
         continue;
       }
 
