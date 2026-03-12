@@ -131,13 +131,18 @@ export async function fetchElAlFlights(): Promise<Flight[]> {
       return flights;
     }
 
+    const total = json.flightsFromIsrael.length;
+    const soldOut = json.flightsFromIsrael.filter(f => f.seatCount === 0).length;
+    const withSeats = json.flightsFromIsrael.filter(f => f.seatCount && f.seatCount > 0).length;
+    const noSeatInfo = json.flightsFromIsrael.filter(f => f.seatCount === undefined || f.seatCount === null).length;
     console.log(
-      `[elal] Received ${json.flightsFromIsrael.length} flight entries`,
+      `[elal] Received ${total} entries: ${withSeats} with seats, ${soldOut} sold out, ${noSeatInfo} no seat info`,
     );
 
     for (const f of json.flightsFromIsrael) {
-      // seatCount absent means available; seatCount === 0 means sold out
-      if (f.seatCount === 0) {
+      // Only include flights that explicitly have seats > 0
+      // seatCount === 0 means sold out, undefined/null means unknown
+      if (!f.seatCount || f.seatCount <= 0) {
         continue;
       }
 
