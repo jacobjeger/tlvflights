@@ -1,7 +1,10 @@
 import { Flight } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
-const API_BASE = 'https://api.aviationstack.com/v1';
+// Free plan uses HTTP; paid plans can use HTTPS
+const API_BASE = process.env.AVIATIONSTACK_HTTPS === 'true'
+  ? 'https://api.aviationstack.com/v1'
+  : 'http://api.aviationstack.com/v1';
 
 interface AviationStackFlight {
   flight_date: string;
