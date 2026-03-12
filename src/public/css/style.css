@@ -270,6 +270,9 @@ a:hover { text-decoration: underline; }
 .status-limited .route-status { background: rgba(210,153,34,0.15); color: var(--accent-amber); }
 .status-closed .route-status { background: rgba(248,81,73,0.15); color: var(--accent); }
 .status-unknown .route-status { background: rgba(139,148,158,0.1); color: var(--text-muted); }
+.highlight-card { border: 1px solid var(--accent-green); background: linear-gradient(135deg, var(--surface) 0%, rgba(63,185,80,0.05) 100%); }
+.route-desc a { color: var(--accent-blue); }
+.route-desc a:hover { text-decoration: underline; }
 
 /* ---- AIRLINE STATUS ---- */
 .status-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
