@@ -6,7 +6,6 @@
  * Supports full GET/POST passthrough with headers and body.
  */
 
-// @ts-ignore
 import { HttpsProxyAgent } from 'https-proxy-agent';
 
 const BRIGHT_DATA_HOST = 'brd.superproxy.io';
