@@ -1,0 +1,144 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --board-bg: #0a0a0a;
+  --board-surface: #141414;
+  --board-border: #1e1e1e;
+  --text-primary: #f5f5f5;
+  --text-secondary: #a3a3a3;
+  --text-muted: #525252;
+  --accent-amber: #f59e0b;
+  --accent-green: #22c55e;
+  --accent-red: #ef4444;
+  --accent-blue: #3b82f6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--board-bg);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100dvh;
+}
+
+@layer components {
+  .board-surface {
+    @apply bg-[#141414] border border-[#1e1e1e] rounded-lg;
+  }
+
+  .flight-row {
+    @apply board-surface p-4 transition-all duration-300 ease-in-out;
+  }
+
+  .flight-row:hover {
+    @apply border-amber-500/30 bg-[#1a1a1a];
+  }
+
+  .flight-row.stale {
+    @apply opacity-50;
+  }
+
+  .mono {
+    font-family: ui-monospace, 'Cascadia Code', 'JetBrains Mono', 'Fira Code', 'Menlo', monospace;
+  }
+
+  .seats-available {
+    @apply text-green-500 bg-green-500/10 border border-green-500/20;
+  }
+
+  .seats-limited {
+    @apply text-amber-500 bg-amber-500/10 border border-amber-500/20;
+  }
+
+  .seats-sold-out {
+    @apply text-red-500 bg-red-500/10 border border-red-500/20;
+  }
+
+  .seats-unknown {
+    @apply text-neutral-400 bg-neutral-500/10 border border-neutral-500/20;
+  }
+
+  .airline-badge-LY {
+    @apply bg-[#003f87] text-white;
+  }
+
+  .airline-badge-IZ {
+    @apply bg-[#e97c00] text-white;
+  }
+
+  .airline-badge-6H {
+    @apply bg-[#00a651] text-white;
+  }
+
+  .airline-badge-E2 {
+    @apply bg-[#0d9488] text-white;
+  }
+
+  .tab-active {
+    @apply bg-amber-500 text-black font-semibold;
+  }
+
+  .tab-inactive {
+    @apply bg-[#1e1e1e] text-neutral-400 hover:bg-[#262626] hover:text-neutral-200;
+  }
+
+  .skeleton {
+    @apply bg-[#1e1e1e] rounded animate-pulse;
+  }
+
+  .pulse-refresh {
+    animation: pulseGlow 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
+  50% {
+    box-shadow: 0 0 12px 2px rgba(245, 158, 11, 0.3);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--board-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
