@@ -42,3 +42,4 @@ data/*.db-shm
 
 # env
 .env
+data/
