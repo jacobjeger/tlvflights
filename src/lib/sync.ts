@@ -30,11 +30,13 @@ export async function runSync(): Promise<{ total: number; errors: string[] }> {
     const env = process.env;
     try {
       const aggregators = await import('./aggregators');
-      console.log('[sync] Aggregator env vars:', {
-        amadeus: !!env['AMADEUS_CLIENT_ID'],
-        kiwi: !!env['KIWI_API_KEY'],
-        aviationstack: !!env['AVIATIONSTACK_API_KEY'],
-      });
+      // Debug: log all env var keys that contain API or KEY
+      const relevantKeys = Object.keys(env).filter(k =>
+        k.includes('API') || k.includes('KEY') || k.includes('AVIATION') || k.includes('SYNC')
+      );
+      console.log('[sync] Relevant env var keys:', relevantKeys);
+      console.log('[sync] AVIATIONSTACK_API_KEY value type:', typeof env['AVIATIONSTACK_API_KEY']);
+      console.log('[sync] AVIATIONSTACK_API_KEY length:', env['AVIATIONSTACK_API_KEY']?.length);
       if (env['AMADEUS_CLIENT_ID']) {
         sources.push({ name: 'amadeus', fetch: aggregators.fetchAmadeusFlights });
       }
