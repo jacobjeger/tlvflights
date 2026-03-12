@@ -19,7 +19,11 @@ export const REGIONS: Region[] = [
   { id: 'caucasus', name: 'Caucasus', emoji: '' },
   { id: 'middle-east', name: 'Middle East', emoji: '' },
   { id: 'africa', name: 'Africa', emoji: '' },
+  { id: 'north-america', name: 'North America', emoji: '' },
+  { id: 'caribbean', name: 'Caribbean', emoji: '' },
+  { id: 'south-america', name: 'South America', emoji: '' },
   { id: 'asia', name: 'Asia', emoji: '' },
+  { id: 'oceania', name: 'Oceania', emoji: '' },
   { id: 'other', name: 'Other', emoji: '' },
 ];
 
@@ -87,11 +91,46 @@ const DESTINATION_REGIONS: Record<string, string> = {
   CMN: 'africa', RAK: 'africa', ACC: 'africa',
   LOS: 'africa', JNB: 'africa', CPT: 'africa',
   DAR: 'africa',
+  // North America - USA
+  JFK: 'north-america', EWR: 'north-america', LAX: 'north-america',
+  MIA: 'north-america', ORD: 'north-america', SFO: 'north-america',
+  BOS: 'north-america', IAD: 'north-america', DFW: 'north-america',
+  ATL: 'north-america', IAH: 'north-america', SEA: 'north-america',
+  LAS: 'north-america', MCO: 'north-america', DEN: 'north-america',
+  PHL: 'north-america', CLT: 'north-america', PHX: 'north-america',
+  MSP: 'north-america', DTW: 'north-america', BWI: 'north-america',
+  FLL: 'north-america', SAN: 'north-america', TPA: 'north-america',
+  PDX: 'north-america', STL: 'north-america', SLC: 'north-america',
+  HNL: 'north-america', AUS: 'north-america', RDU: 'north-america',
+  // North America - Canada
+  YYZ: 'north-america', YUL: 'north-america', YVR: 'north-america',
+  YOW: 'north-america', YEG: 'north-america', YYC: 'north-america',
+  YWG: 'north-america', YHZ: 'north-america',
+  // North America - Mexico
+  MEX: 'north-america', CUN: 'north-america', GDL: 'north-america',
+  SJD: 'north-america', PVR: 'north-america',
+  // Caribbean
+  SJU: 'caribbean', PUJ: 'caribbean', NAS: 'caribbean',
+  MBJ: 'caribbean', KIN: 'caribbean', BGI: 'caribbean',
+  AUA: 'caribbean', CUR: 'caribbean', SXM: 'caribbean',
+  HAV: 'caribbean', SDQ: 'caribbean', POS: 'caribbean',
+  GCM: 'caribbean',
+  // South America
+  GRU: 'south-america', GIG: 'south-america', EZE: 'south-america',
+  BOG: 'south-america', SCL: 'south-america', LIM: 'south-america',
+  MVD: 'south-america', CCS: 'south-america', UIO: 'south-america',
+  MDE: 'south-america', PTY: 'south-america',
   // Asia
   BKK: 'asia', DEL: 'asia', BOM: 'asia',
   HKG: 'asia', SIN: 'asia', PEK: 'asia',
   PVG: 'asia', ICN: 'asia', NRT: 'asia',
   KTM: 'asia', CMB: 'asia', MLE: 'asia',
+  KUL: 'asia', MNL: 'asia', CGK: 'asia',
+  HAN: 'asia', SGN: 'asia', TPE: 'asia',
+  PNH: 'asia', RGN: 'asia', DAD: 'asia',
+  // Oceania
+  SYD: 'oceania', MEL: 'oceania', BNE: 'oceania',
+  AKL: 'oceania', PER: 'oceania', NAN: 'oceania',
 };
 
 export function getRegionForDestination(iata: string): string {

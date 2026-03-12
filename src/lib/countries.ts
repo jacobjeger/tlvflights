@@ -136,6 +136,30 @@ const AIRPORT_COUNTRIES: Record<string, string> = {
   MLE: 'MV',
   // Belarus
   MSQ: 'BY',
+  // USA
+  JFK: 'US', EWR: 'US', LAX: 'US', MIA: 'US', ORD: 'US', SFO: 'US',
+  BOS: 'US', IAD: 'US', DFW: 'US', ATL: 'US', IAH: 'US', SEA: 'US',
+  LAS: 'US', MCO: 'US', DEN: 'US', PHL: 'US', CLT: 'US', PHX: 'US',
+  MSP: 'US', DTW: 'US', BWI: 'US', FLL: 'US', SAN: 'US', TPA: 'US',
+  PDX: 'US', STL: 'US', SLC: 'US', HNL: 'US', AUS: 'US', RDU: 'US',
+  // Canada
+  YYZ: 'CA', YUL: 'CA', YVR: 'CA', YOW: 'CA', YEG: 'CA', YYC: 'CA',
+  YWG: 'CA', YHZ: 'CA',
+  // Mexico
+  MEX: 'MX', CUN: 'MX', GDL: 'MX', SJD: 'MX', PVR: 'MX',
+  // Caribbean
+  SJU: 'PR', PUJ: 'DO', NAS: 'BS', MBJ: 'JM', KIN: 'JM',
+  BGI: 'BB', AUA: 'AW', CUR: 'CW', SXM: 'SX', HAV: 'CU',
+  SDQ: 'DO', POS: 'TT', GCM: 'KY',
+  // South America
+  GRU: 'BR', GIG: 'BR', EZE: 'AR', BOG: 'CO', SCL: 'CL',
+  LIM: 'PE', MVD: 'UY', CCS: 'VE', UIO: 'EC', MDE: 'CO',
+  PTY: 'PA',
+  // More Asia
+  KUL: 'MY', MNL: 'PH', CGK: 'ID', HAN: 'VN', SGN: 'VN',
+  TPE: 'TW', PNH: 'KH', RGN: 'MM', DAD: 'VN',
+  // Oceania
+  SYD: 'AU', MEL: 'AU', BNE: 'AU', AKL: 'NZ', PER: 'AU', NAN: 'FJ',
 };
 
 /**
