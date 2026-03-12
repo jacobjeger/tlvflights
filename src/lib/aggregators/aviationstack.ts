@@ -1,7 +1,7 @@
 import { Flight } from '../types';
 
 // Free plan uses HTTP; paid plans can use HTTPS
-const API_BASE = process.env.AVIATIONSTACK_HTTPS === 'true'
+const API_BASE = process.env['AVIATIONSTACK_HTTPS'] === 'true'
   ? 'https://api.aviationstack.com/v1'
   : 'http://api.aviationstack.com/v1';
 
@@ -146,7 +146,7 @@ function getCityName(iata: string, airportName?: string): string {
  * Uses the /flights endpoint for real-time and /timetable for schedules.
  */
 export async function fetchAviationStackFlights(): Promise<Flight[]> {
-  const apiKey = process.env.AVIATIONSTACK_API_KEY;
+  const apiKey = process.env['AVIATIONSTACK_API_KEY'];
   if (!apiKey) {
     console.log('[aviationstack] No API key configured, skipping');
     return [];

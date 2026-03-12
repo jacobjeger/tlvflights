@@ -3,7 +3,7 @@ import { Flight } from '../types';
 const API_BASE = 'https://tequila-api.kiwi.com';
 
 export async function fetchKiwiFlights(): Promise<Flight[]> {
-  const apiKey = process.env.KIWI_API_KEY;
+  const apiKey = process.env['KIWI_API_KEY'];
   if (!apiKey) {
     console.log('[kiwi] No API key configured, skipping');
     return [];

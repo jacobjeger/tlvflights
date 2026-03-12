@@ -4,7 +4,7 @@ export async function register() {
     const cron = await import('node-cron');
     const { runSync } = await import('./lib/sync');
 
-    const interval = process.env.SYNC_INTERVAL_MINUTES || '2';
+    const interval = process.env['SYNC_INTERVAL_MINUTES'] || '2';
     console.log(`[worker] Starting background sync (every ${interval} min)`);
 
     // Initialize database and clean stale data on startup

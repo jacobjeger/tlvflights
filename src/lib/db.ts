@@ -1,7 +1,7 @@
 import { Pool } from 'pg';
 import { Flight } from './types';
 
-const DATABASE_URL = process.env.DATABASE_URL;
+const DATABASE_URL = process.env['DATABASE_URL'];
 
 let pool: Pool | null = null;
 

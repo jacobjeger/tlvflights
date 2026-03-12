@@ -9,12 +9,12 @@
 type ProxyProvider = 'zenrows' | 'scrapingbee' | 'none';
 
 function getProxyProvider(): { provider: ProxyProvider; apiKey: string } {
-  const zenrowsKey = process.env.ZENROWS_API_KEY;
+  const zenrowsKey = process.env['ZENROWS_API_KEY'];
   if (zenrowsKey) {
     return { provider: 'zenrows', apiKey: zenrowsKey };
   }
 
-  const scrapingbeeKey = process.env.SCRAPINGBEE_API_KEY;
+  const scrapingbeeKey = process.env['SCRAPINGBEE_API_KEY'];
   if (scrapingbeeKey) {
     return { provider: 'scrapingbee', apiKey: scrapingbeeKey };
   }

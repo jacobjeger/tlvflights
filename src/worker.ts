@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 import { runSync } from './lib/sync';
 
-const AIRLINE_INTERVAL = process.env.SYNC_INTERVAL_MINUTES || '2';
+const AIRLINE_INTERVAL = process.env['SYNC_INTERVAL_MINUTES'] || '2';
 
 console.log(`[worker] Starting background sync worker (every ${AIRLINE_INTERVAL} minutes)`);
 

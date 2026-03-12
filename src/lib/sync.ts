@@ -26,20 +26,22 @@ export async function runSync(): Promise<{ total: number; errors: string[] }> {
     ];
 
     // Try loading aggregator sources
+    // Use bracket notation to prevent Next.js webpack from inlining env vars at build time
+    const env = process.env;
     try {
       const aggregators = await import('./aggregators');
       console.log('[sync] Aggregator env vars:', {
-        amadeus: !!process.env.AMADEUS_CLIENT_ID,
-        kiwi: !!process.env.KIWI_API_KEY,
-        aviationstack: !!process.env.AVIATIONSTACK_API_KEY,
+        amadeus: !!env['AMADEUS_CLIENT_ID'],
+        kiwi: !!env['KIWI_API_KEY'],
+        aviationstack: !!env['AVIATIONSTACK_API_KEY'],
       });
-      if (process.env.AMADEUS_CLIENT_ID) {
+      if (env['AMADEUS_CLIENT_ID']) {
         sources.push({ name: 'amadeus', fetch: aggregators.fetchAmadeusFlights });
       }
-      if (process.env.KIWI_API_KEY) {
+      if (env['KIWI_API_KEY']) {
         sources.push({ name: 'kiwi', fetch: aggregators.fetchKiwiFlights });
       }
-      if (process.env.AVIATIONSTACK_API_KEY) {
+      if (env['AVIATIONSTACK_API_KEY']) {
         sources.push({ name: 'aviationstack', fetch: aggregators.fetchAviationStackFlights });
       }
     } catch (err) {

@@ -6,8 +6,8 @@ let accessToken: string | null = null;
 let tokenExpiry = 0;
 
 async function getAccessToken(): Promise<string> {
-  const clientId = process.env.AMADEUS_CLIENT_ID;
-  const clientSecret = process.env.AMADEUS_CLIENT_SECRET;
+  const clientId = process.env['AMADEUS_CLIENT_ID'];
+  const clientSecret = process.env['AMADEUS_CLIENT_SECRET'];
 
   if (!clientId || !clientSecret) {
     throw new Error('Amadeus API credentials not configured');
@@ -34,7 +34,7 @@ async function getAccessToken(): Promise<string> {
 }
 
 export async function fetchAmadeusFlights(): Promise<Flight[]> {
-  if (!process.env.AMADEUS_CLIENT_ID) {
+  if (!process.env['AMADEUS_CLIENT_ID']) {
     console.log('[amadeus] No API credentials configured, skipping');
     return [];
   }
