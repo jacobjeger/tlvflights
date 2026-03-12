@@ -1,79 +1,60 @@
 /**
- * Anti-bot proxy client for fetching pages protected by WAFs
+ * Bright Data residential proxy for fetching pages protected by WAFs
  * (Akamai, Cloudflare, Imperva/Incapsula).
  *
- * Supports ZenRows and ScrapingBee. Falls back to regular fetch
- * when no proxy API key is configured.
+ * Uses Bright Data's residential proxy network with Israel IPs.
+ * Supports full GET/POST passthrough with headers and body.
  */
 
-type ProxyProvider = 'zenrows' | 'scrapingbee' | 'none';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 
-function getProxyProvider(): { provider: ProxyProvider; apiKey: string } {
-  const zenrowsKey = process.env['ZENROWS_API_KEY'];
-  if (zenrowsKey) {
-    return { provider: 'zenrows', apiKey: zenrowsKey };
+const BRIGHT_DATA_HOST = 'brd.superproxy.io';
+const BRIGHT_DATA_PORT = '33335';
+const BRIGHT_DATA_USERNAME = 'brd-customer-hl_42a4df75-zone-residential_proxy1';
+const BRIGHT_DATA_PASSWORD = '5c8o5y2jk48o';
+
+let proxyAgent: HttpsProxyAgent<string> | null = null;
+
+function getProxyAgent(): HttpsProxyAgent<string> {
+  if (!proxyAgent) {
+    const proxyUrl = `http://${BRIGHT_DATA_USERNAME}:${BRIGHT_DATA_PASSWORD}@${BRIGHT_DATA_HOST}:${BRIGHT_DATA_PORT}`;
+    proxyAgent = new HttpsProxyAgent(proxyUrl);
   }
-
-  const scrapingbeeKey = process.env['SCRAPINGBEE_API_KEY'];
-  if (scrapingbeeKey) {
-    return { provider: 'scrapingbee', apiKey: scrapingbeeKey };
-  }
-
-  return { provider: 'none', apiKey: '' };
+  return proxyAgent;
 }
 
 export function isProxyConfigured(): boolean {
-  return getProxyProvider().provider !== 'none';
+  return true; // Bright Data credentials are always available
 }
 
 /**
- * Fetch a URL through a proxy service that handles anti-bot protection.
- *
- * When a proxy is configured the target URL is passed as a query parameter
- * to the proxy API, which renders JavaScript and returns the response.
- *
- * If no proxy is configured, falls back to a plain `fetch`.
+ * Fetch a URL through the Bright Data residential proxy.
+ * Full passthrough: method, headers, body all go through as-is.
  */
 export async function fetchWithProxy(
   url: string,
   options?: RequestInit,
 ): Promise<Response> {
-  const { provider, apiKey } = getProxyProvider();
+  const agent = getProxyAgent();
 
-  if (provider === 'none') {
-    console.warn('[proxy] No proxy API key configured – falling back to direct fetch');
-    return fetch(url, options);
+  console.log(`[proxy] Fetching via Bright Data: ${url}`);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      // @ts-expect-error Node.js fetch supports agent option
+      agent,
+    });
+
+    if (!response.ok) {
+      console.error(
+        `[proxy] Bright Data request returned ${response.status} for ${url}`,
+      );
+    }
+
+    return response;
+  } catch (error) {
+    console.error(`[proxy] Bright Data fetch failed for ${url}:`, error);
+    throw error;
   }
-
-  const encodedUrl = encodeURIComponent(url);
-  let proxyUrl: string;
-
-  if (provider === 'zenrows') {
-    proxyUrl = `https://api.zenrows.com/v1/?apikey=${apiKey}&url=${encodedUrl}&js_render=true`;
-  } else {
-    // scrapingbee
-    proxyUrl = `https://app.scrapingbee.com/api/v1/?api_key=${apiKey}&url=${encodedUrl}&render_js=true`;
-  }
-
-  console.log(`[proxy] Fetching via ${provider}: ${url}`);
-
-  // Proxy services expect a GET; we forward relevant headers but strip
-  // host/origin since the proxy will set its own.
-  const headers = new Headers(options?.headers);
-  headers.delete('host');
-  headers.delete('origin');
-
-  const response = await fetch(proxyUrl, {
-    method: 'GET',
-    headers,
-    signal: options?.signal,
-  });
-
-  if (!response.ok) {
-    console.error(
-      `[proxy] ${provider} returned ${response.status} for ${url}`,
-    );
-  }
-
-  return response;
 }

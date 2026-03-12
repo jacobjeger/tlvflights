@@ -1,9 +1,24 @@
+import { execSync } from 'child_process';
 import { Flight } from '../types';
 
 // Free plan uses HTTP; paid plans can use HTTPS
 const API_BASE = process.env['AVIATIONSTACK_HTTPS'] === 'true'
   ? 'https://api.aviationstack.com/v1'
   : 'http://api.aviationstack.com/v1';
+
+/**
+ * Read an env var, falling back to reading directly from the OS
+ * in case Next.js webpack has stripped it from process.env.
+ */
+function getEnvVar(name: string): string | undefined {
+  const val = process.env[name];
+  if (val) return val;
+  try {
+    return execSync(`printenv ${name} 2>/dev/null`).toString().trim() || undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 interface AviationStackFlight {
   flight_date: string;
@@ -146,7 +161,8 @@ function getCityName(iata: string, airportName?: string): string {
  * Uses the /flights endpoint for real-time and /timetable for schedules.
  */
 export async function fetchAviationStackFlights(): Promise<Flight[]> {
-  const apiKey = process.env['AVIATIONSTACK_API_KEY'];
+  const apiKey = getEnvVar('AVIATIONSTACK_API_KEY');
+  console.log('[aviationstack] API key found:', !!apiKey, apiKey ? `(${apiKey.length} chars)` : '');
   if (!apiKey) {
     console.log('[aviationstack] No API key configured, skipping');
     return [];

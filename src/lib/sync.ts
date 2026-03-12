@@ -25,27 +25,18 @@ export async function runSync(): Promise<{ total: number; errors: string[] }> {
       { name: 'airhaifa', fetch: airlines.fetchAirHaifaFlights },
     ];
 
-    // Try loading aggregator sources
-    // Use bracket notation to prevent Next.js webpack from inlining env vars at build time
-    const env = process.env;
+    // Load aggregator sources
     try {
       const aggregators = await import('./aggregators');
-      // Debug: log all env var keys that contain API or KEY
-      const relevantKeys = Object.keys(env).filter(k =>
-        k.includes('API') || k.includes('KEY') || k.includes('AVIATION') || k.includes('SYNC')
-      );
-      console.log('[sync] Relevant env var keys:', relevantKeys);
-      console.log('[sync] AVIATIONSTACK_API_KEY value type:', typeof env['AVIATIONSTACK_API_KEY']);
-      console.log('[sync] AVIATIONSTACK_API_KEY length:', env['AVIATIONSTACK_API_KEY']?.length);
+      const env = process.env;
       if (env['AMADEUS_CLIENT_ID']) {
         sources.push({ name: 'amadeus', fetch: aggregators.fetchAmadeusFlights });
       }
       if (env['KIWI_API_KEY']) {
         sources.push({ name: 'kiwi', fetch: aggregators.fetchKiwiFlights });
       }
-      if (env['AVIATIONSTACK_API_KEY']) {
-        sources.push({ name: 'aviationstack', fetch: aggregators.fetchAviationStackFlights });
-      }
+      // Always load aviationstack — let the module handle its own key check
+      sources.push({ name: 'aviationstack', fetch: aggregators.fetchAviationStackFlights });
     } catch (err) {
       console.error('[sync] Aggregator modules not available:', err);
     }

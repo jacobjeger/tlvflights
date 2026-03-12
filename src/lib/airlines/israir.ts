@@ -8,6 +8,7 @@
 
 import crypto from 'crypto';
 import type { Flight } from '../types';
+import { fetchWithProxy } from './proxy';
 
 const API_URL = 'https://www.israirairlines.com/api/engine';
 
@@ -78,9 +79,9 @@ export async function fetchIsrairFlights(): Promise<Flight[]> {
     console.log('[israir] Fetching flights from Israir API...');
 
     const controller = new AbortController();
-    const fetchTimeout = setTimeout(() => controller.abort(), 15000);
+    const fetchTimeout = setTimeout(() => controller.abort(), 30000);
 
-    const response = await fetch(url, {
+    const response = await fetchWithProxy(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
