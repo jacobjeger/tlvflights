@@ -7,52 +7,48 @@ interface StatusBarProps {
 }
 
 function getRelativeTime(isoString: string): string {
-  const now = Date.now();
-  const then = new Date(isoString).getTime();
-  const diffMs = now - then;
+  const diffMs = Date.now() - new Date(isoString).getTime();
   const diffSec = Math.floor(diffMs / 1000);
-
   if (diffSec < 60) return 'just now';
   const diffMin = Math.floor(diffSec / 60);
   if (diffMin < 60) return `${diffMin}m ago`;
   const diffHr = Math.floor(diffMin / 60);
   if (diffHr < 24) return `${diffHr}h ago`;
-  const diffDay = Math.floor(diffHr / 24);
-  return `${diffDay}d ago`;
+  return `${Math.floor(diffHr / 24)}d ago`;
 }
 
 export default function StatusBar({ lastSync, isRefreshing, onRefresh }: StatusBarProps) {
   return (
-    <div
-      className={`flex items-center justify-between rounded-lg border px-4 py-2.5 text-xs transition-all duration-300 ${
-        isRefreshing
-          ? 'pulse-refresh border-amber-500/30 bg-amber-500/5'
-          : 'border-[#1e1e1e] bg-[#111]'
-      }`}
-    >
-      <div className="flex items-center gap-3">
-        {lastSync ? (
-          <>
-            <span
-              className={`inline-block h-2 w-2 rounded-full ${
-                lastSync.status === 'success' ? 'bg-green-500' : 'bg-red-500'
-              }`}
-            />
-            <span className="text-neutral-400">
-              Updated {getRelativeTime(lastSync.completedAt)}
-            </span>
-          </>
-        ) : (
-          <span className="text-neutral-500">No sync data yet</span>
-        )}
-      </div>
-
+    <div className="flex items-center gap-3">
+      {lastSync && (
+        <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+          <span
+            className={`inline-block h-1.5 w-1.5 rounded-full ${
+              lastSync.status === 'success' ? 'bg-emerald-500 pulse-dot' : 'bg-red-500'
+            }`}
+          />
+          Updated {getRelativeTime(lastSync.completedAt)}
+        </div>
+      )}
       <button
         onClick={onRefresh}
         disabled={isRefreshing}
-        className="rounded-md border border-[#2a2a2a] bg-[#1a1a1a] px-3 py-1.5 text-xs text-neutral-300 transition-colors hover:border-amber-500/30 hover:text-amber-400 disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-all hover:border-zinc-600 hover:text-zinc-200 disabled:opacity-40"
       >
-        {isRefreshing ? 'Syncing...' : 'Refresh Now'}
+        <svg
+          className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          />
+        </svg>
+        {isRefreshing ? 'Syncing...' : 'Refresh'}
       </button>
     </div>
   );

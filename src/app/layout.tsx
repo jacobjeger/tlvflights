@@ -1,16 +1,15 @@
-import type { Metadata } from 'next';
-import localFont from 'next/font/local';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
-const geistMono = localFont({
-  src: './fonts/GeistMonoVF.woff',
-  variable: '--font-geist-mono',
-  weight: '100 900',
-});
-
 export const metadata: Metadata = {
-  title: 'TLV Flights - Find Available Seats',
-  description: 'Real-time flight availability from TLV and Taba airports',
+  title: 'TLV Flights — Find a Seat Out',
+  description: 'Real-time flight availability from Ben Gurion (TLV) and Taba airports. Find any available seat to any destination.',
+};
+
+export const viewport: Viewport = {
+  themeColor: '#09090b',
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -20,13 +19,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <meta name="theme-color" content="#0a0a0a" />
-      </head>
-      <body className={`${geistMono.variable} antialiased min-h-dvh bg-[#0a0a0a] text-neutral-100`}>
-        <main className="mx-auto max-w-3xl px-4 py-6">
+      <body>
+        <div className="mx-auto max-w-5xl px-4 py-4 sm:py-8">
           {children}
-        </main>
+        </div>
       </body>
     </html>
   );
