@@ -348,17 +348,21 @@ export default function FlightBoard() {
       <div className="flex flex-col gap-2">
         {/* Regions */}
         <div className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1 scrollbar-thin">
-          {REGIONS.filter((r) => r.id === 'all' || (regionCounts[r.id] || 0) > 0).map((region) => {
+          {REGIONS.map((region) => {
             const count = regionCounts[region.id] || 0;
             const isActive = selectedRegion === region.id;
+            const isEmpty = region.id !== 'all' && count === 0;
             return (
               <button
                 key={region.id}
-                onClick={() => setSelectedRegion(region.id)}
+                onClick={() => !isEmpty && setSelectedRegion(region.id)}
+                disabled={isEmpty}
                 className={`shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all ${
-                  isActive
-                    ? 'bg-zinc-200 text-zinc-900'
-                    : 'text-zinc-500 hover:bg-zinc-800/50 hover:text-zinc-300'
+                  isEmpty
+                    ? 'cursor-default text-zinc-700'
+                    : isActive
+                      ? 'bg-zinc-200 text-zinc-900'
+                      : 'text-zinc-500 hover:bg-zinc-800/50 hover:text-zinc-300'
                 }`}
               >
                 {region.name}

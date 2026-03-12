@@ -7,6 +7,17 @@ export async function register() {
     const interval = process.env.SYNC_INTERVAL_MINUTES || '2';
     console.log(`[worker] Starting background sync (every ${interval} min)`);
 
+    // Clean stale data on startup
+    try {
+      const { cleanStaleFlights } = await import('./lib/db');
+      const removed = cleanStaleFlights();
+      if (removed > 0) {
+        console.log(`[worker] Cleaned ${removed} stale flights`);
+      }
+    } catch (error) {
+      console.error('[worker] Cleanup failed:', error);
+    }
+
     // Initial sync after 3 seconds
     setTimeout(async () => {
       console.log('[worker] Running initial sync...');

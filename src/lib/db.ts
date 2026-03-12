@@ -142,6 +142,21 @@ export function logSync(source: string, status: string, flightsFound: number, er
   `).run(source, status, flightsFound, errorMessage || null, now, now);
 }
 
+export function clearAllFlights(): number {
+  const database = getDb();
+  const result = database.prepare('DELETE FROM flights').run();
+  return result.changes;
+}
+
+export function cleanStaleFlights(): number {
+  const database = getDb();
+  // Remove flights with departure_time more than 1 day in the past
+  const result = database.prepare(
+    `DELETE FROM flights WHERE departure_time < datetime('now', '-1 day')`
+  ).run();
+  return result.changes;
+}
+
 function rowToFlight(row: Record<string, unknown>): Flight {
   return {
     id: row.id as string,
