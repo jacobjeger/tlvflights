@@ -62,6 +62,11 @@ export async function initDb(): Promise<void> {
 }
 
 export async function upsertFlight(flight: Flight): Promise<void> {
+  // Validate timestamps before inserting
+  if (!flight.departureTime || !flight.departureTime.match(/^\d{4}-\d{2}-\d{2}T/)) {
+    console.warn(`[db] Skipping flight ${flight.id}: invalid departureTime "${flight.departureTime}"`);
+    return;
+  }
   const client = getPool();
   await client.query(
     `INSERT INTO flights (id, flight_number, airline, airline_name, origin, destination,

@@ -144,6 +144,10 @@ export async function fetchElAlFlights(): Promise<Flight[]> {
       const destination = f.destination || '';
       const flightNumber = f.flightNumber || '';
       const date = f.date ? parseElAlDate(f.date) : '';
+
+      // Skip flights with no valid date — they produce invalid timestamps
+      if (!date) continue;
+
       const flightId = `LY_${flightNumber || destination}_${date}`;
 
       flights.push({
