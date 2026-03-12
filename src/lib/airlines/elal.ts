@@ -139,6 +139,15 @@ export async function fetchElAlFlights(): Promise<Flight[]> {
       `[elal] Received ${total} entries: ${withSeats} with seats, ${soldOut} sold out, ${noSeatInfo} no seat info`,
     );
 
+    // Log first flight object shape to debug missing fields
+    if (json.flightsFromIsrael.length > 0) {
+      console.log('[elal] Sample flight keys:', Object.keys(json.flightsFromIsrael[0]).join(', '));
+      console.log('[elal] Sample flight:', JSON.stringify(json.flightsFromIsrael[0]).slice(0, 500));
+    }
+    if (json.dateRange?.dates?.length) {
+      console.log(`[elal] dateRange has ${json.dateRange.dates.length} dates, sample: ${json.dateRange.dates.slice(0, 3).join(', ')}`);
+    }
+
     for (const f of json.flightsFromIsrael) {
       // seatCount === 0 means explicitly sold out — skip those
       // seatCount undefined/null means listed on seat availability page = available
@@ -148,7 +157,15 @@ export async function fetchElAlFlights(): Promise<Flight[]> {
 
       const destination = f.destination || '';
       const flightNumber = f.flightNumber || '';
-      const date = f.date ? parseElAlDate(f.date) : '';
+
+      // Try multiple date sources: f.date (DD.MM), departureTime as ISO, or dateRange dates
+      let date = '';
+      if (f.date) {
+        date = parseElAlDate(f.date);
+      } else if (f.departureTime && f.departureTime.includes('-')) {
+        // departureTime might be a full ISO date string
+        date = f.departureTime.slice(0, 10);
+      }
 
       // Skip flights with no valid date — they produce invalid timestamps
       if (!date) continue;

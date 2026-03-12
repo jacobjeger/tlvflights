@@ -169,26 +169,26 @@ export async function fetchIsrairFlights(): Promise<Flight[]> {
         }
       }
     } else {
-      // Values are not destination arrays — dates represent available dates across all destinations
-      console.log('[israir] calendarMap values are not dest arrays, using date x destination');
-      const availableDates = calendarKeys.filter(d => d <= maxDateStr);
+      // Values are not destination arrays — we only know which dates have ANY flights.
+      // Show one entry per destination using the earliest available date (no cross-join).
+      const availableDates = calendarKeys.filter(d => d <= maxDateStr).sort();
+      const earliestDate = availableDates[0] || today;
+      console.log(`[israir] Using earliest available date ${earliestDate} for ${destLocations.length} destinations`);
       for (const destination of destLocations) {
         const cityName = getCityName(destination);
-        for (const date of availableDates) {
-          flights.push({
-            id: `6H_${destination}_${date}`,
-            flightNumber: '',
-            airline: '6H',
-            airlineName: 'Israir',
-            origin: 'TLV',
-            destination,
-            destinationCity: cityName,
-            departureTime: `${date}T00:00:00.000Z`,
-            source: 'israir',
-            bookingUrl: buildBookingUrl(destination, date),
-            lastSeen: now,
-          });
-        }
+        flights.push({
+          id: `6H_${destination}_${earliestDate}`,
+          flightNumber: '',
+          airline: '6H',
+          airlineName: 'Israir',
+          origin: 'TLV',
+          destination,
+          destinationCity: cityName,
+          departureTime: `${earliestDate}T00:00:00.000Z`,
+          source: 'israir',
+          bookingUrl: buildBookingUrl(destination, earliestDate),
+          lastSeen: now,
+        });
       }
     }
 
