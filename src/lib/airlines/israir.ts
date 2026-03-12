@@ -122,48 +122,73 @@ export async function fetchIsrairFlights(): Promise<Flight[]> {
       return flights;
     }
 
+    // Log structure for debugging
+    const calendarKeys = Object.keys(calendarMap).sort();
+    const sampleKey = calendarKeys[0];
+    const sampleVal = sampleKey ? calendarMap[sampleKey] : null;
     console.log(
       `[israir] Found ${destLocations.length} destinations, ` +
-        `${Object.keys(calendarMap).length} date entries`,
+        `${calendarKeys.length} calendar entries. ` +
+        `Sample: ${sampleKey} => ${JSON.stringify(sampleVal).slice(0, 200)}`,
     );
 
-    // Build a lookup from complexDestLocations if available
-    const destMeta = new Map<string, { ltravelId?: string }>();
-    if (json.data.complexDestLocations) {
-      for (const dest of json.data.complexDestLocations) {
-        destMeta.set(dest.cityCode, { ltravelId: dest.ltravelId });
-      }
-    }
-
-    // Limit to next 14 days to keep data manageable
+    // Limit to next 14 days
     const maxDate = new Date();
     maxDate.setDate(maxDate.getDate() + 14);
     const maxDateStr = maxDate.toISOString().slice(0, 10);
 
-    // calendarMap: keys are dates, values are arrays of destination codes
-    // Only create entries for specific destination+date combos that exist
-    for (const [date, destinations] of Object.entries(calendarMap)) {
-      if (date > maxDateStr) continue;
+    // calendarMap structure: { "YYYY-MM-DD": [...destinations] }
+    // If values are arrays of destination codes, use them directly.
+    // Otherwise fall back to destLocations x available dates.
+    const firstVal = sampleVal;
+    const valuesAreDestArrays = Array.isArray(firstVal) &&
+      firstVal.length > 0 && typeof firstVal[0] === 'string' &&
+      firstVal[0].length >= 2 && firstVal[0].length <= 4;
 
-      const destList = Array.isArray(destinations) ? destinations : [];
-      for (const destination of destList) {
-        if (!destination || typeof destination !== 'string') continue;
+    if (valuesAreDestArrays) {
+      console.log('[israir] Using calendarMap destination-date pairs');
+      for (const [date, dests] of Object.entries(calendarMap)) {
+        if (date > maxDateStr) continue;
+        const destList = Array.isArray(dests) ? dests : [];
+        for (const destination of destList) {
+          if (!destination || typeof destination !== 'string') continue;
+          const cityName = getCityName(destination);
+          flights.push({
+            id: `6H_${destination}_${date}`,
+            flightNumber: '',
+            airline: '6H',
+            airlineName: 'Israir',
+            origin: 'TLV',
+            destination,
+            destinationCity: cityName,
+            departureTime: `${date}T00:00:00.000Z`,
+            source: 'israir',
+            bookingUrl: buildBookingUrl(destination, date),
+            lastSeen: now,
+          });
+        }
+      }
+    } else {
+      // Values are not destination arrays — dates represent available dates across all destinations
+      console.log('[israir] calendarMap values are not dest arrays, using date x destination');
+      const availableDates = calendarKeys.filter(d => d <= maxDateStr);
+      for (const destination of destLocations) {
         const cityName = getCityName(destination);
-        const flightId = `6H_${destination}_${date}`;
-
-        flights.push({
-          id: flightId,
-          flightNumber: '',
-          airline: '6H',
-          airlineName: 'Israir',
-          origin: 'TLV',
-          destination,
-          destinationCity: cityName,
-          departureTime: `${date}T00:00:00.000Z`,
-          source: 'israir',
-          bookingUrl: buildBookingUrl(destination, date),
-          lastSeen: now,
-        });
+        for (const date of availableDates) {
+          flights.push({
+            id: `6H_${destination}_${date}`,
+            flightNumber: '',
+            airline: '6H',
+            airlineName: 'Israir',
+            origin: 'TLV',
+            destination,
+            destinationCity: cityName,
+            departureTime: `${date}T00:00:00.000Z`,
+            source: 'israir',
+            bookingUrl: buildBookingUrl(destination, date),
+            lastSeen: now,
+          });
+        }
       }
     }
 
