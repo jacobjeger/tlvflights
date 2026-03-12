@@ -1,0 +1,191 @@
+<%- include('../partials/head', { pageTitle: 'Admin Dashboard' }) %>
+
+<header class="admin-header">
+  <div class="container">
+    <h1>Admin Dashboard</h1>
+    <div class="admin-actions">
+      <form method="POST" action="/admin/sync" style="display:inline">
+        <button class="btn btn-sm">Trigger Sync</button>
+      </form>
+      <a href="/" class="btn btn-sm btn-outline">View Site</a>
+    </div>
+  </div>
+</header>
+
+<main class="container admin-main">
+
+  <!-- SYNC STATUS -->
+  <section class="admin-section">
+    <h2>Sync Status</h2>
+    <% if (lastSync) { %>
+      <p>Last sync: <strong><%= lastSync.source %></strong> &mdash; <%= lastSync.status %> &mdash; <%= new Date(lastSync.completedAt).toLocaleString() %></p>
+    <% } else { %>
+      <p>No syncs recorded yet.</p>
+    <% } %>
+    <h3>Airline Status</h3>
+    <table class="admin-table">
+      <thead><tr><th>Airline</th><th>Flights</th><th>Last Seen</th></tr></thead>
+      <tbody>
+        <% airlineStatuses.forEach(function(s) { %>
+          <tr>
+            <td><%= s.airlineName %> (<%= s.airline %>)</td>
+            <td><%= s.flightCount %></td>
+            <td><%= new Date(s.lastSeen).toLocaleString() %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- LISTINGS -->
+  <section class="admin-section">
+    <h2>Listings</h2>
+
+    <!-- Add new listing form -->
+    <details class="admin-form-toggle" open>
+      <summary><strong>+ Add New Listing</strong></summary>
+      <form method="POST" action="/admin/listings" class="admin-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Title *</label>
+            <input type="text" name="title" required placeholder="e.g. Charter bus to Taba">
+          </div>
+          <div class="form-group">
+            <label>Destination</label>
+            <input type="text" name="destination" placeholder="e.g. Cairo, Amman">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea name="description" rows="3" placeholder="Details about the listing..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Departure Date</label>
+            <input type="date" name="departure_date">
+          </div>
+          <div class="form-group">
+            <label>Departure Point</label>
+            <input type="text" name="departure_point" placeholder="e.g. Tel Aviv Central Bus Station">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Price</label>
+            <input type="text" name="price" placeholder="e.g. $50, 200 NIS, Free">
+          </div>
+          <div class="form-group">
+            <label>Spots Remaining</label>
+            <input type="number" name="spots_remaining" min="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Contact (WhatsApp/Phone/Email/URL)</label>
+          <input type="text" name="contact" placeholder="e.g. +972-50-1234567 or https://wa.me/...">
+        </div>
+        <button type="submit" class="btn">Create Listing</button>
+      </form>
+    </details>
+
+    <!-- Existing listings -->
+    <% if (listings.length > 0) { %>
+      <table class="admin-table">
+        <thead>
+          <tr><th>ID</th><th>Title</th><th>Destination</th><th>Date</th><th>Spots</th><th>Active</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          <% listings.forEach(function(l) { %>
+            <tr class="<%= l.active ? '' : 'row-inactive' %>">
+              <td><%= l.id %></td>
+              <td><%= l.title %></td>
+              <td><%= l.destination %></td>
+              <td><%= l.departureDate || '-' %></td>
+              <td><%= l.spotsRemaining !== null ? l.spotsRemaining : '-' %></td>
+              <td><%= l.active ? 'Yes' : 'No' %></td>
+              <td>
+                <form method="POST" action="/admin/listings/<%= l.id %>" style="display:inline">
+                  <input type="hidden" name="active" value="<%= l.active ? 'false' : 'true' %>">
+                  <button class="btn btn-sm <%= l.active ? 'btn-danger' : 'btn-success' %>"><%= l.active ? 'Deactivate' : 'Activate' %></button>
+                </form>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <p>No listings yet.</p>
+    <% } %>
+  </section>
+
+  <!-- EXIT ROUTES -->
+  <section class="admin-section">
+    <h2>Exit Routes</h2>
+
+    <details class="admin-form-toggle">
+      <summary><strong>+ Add/Edit Exit Route</strong></summary>
+      <form method="POST" action="/admin/exit-routes" class="admin-form">
+        <div class="form-group">
+          <label>ID (leave empty for new)</label>
+          <input type="number" name="id" placeholder="Leave empty to create new">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Title *</label>
+            <input type="text" name="title" required placeholder="e.g. Taba Border Crossing">
+          </div>
+          <div class="form-group">
+            <label>Subtitle</label>
+            <input type="text" name="subtitle" placeholder="e.g. Israel to Egypt">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea name="description" rows="3"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Status</label>
+            <select name="status">
+              <option value="open">Open</option>
+              <option value="limited">Limited</option>
+              <option value="closed">Closed</option>
+              <option value="unknown" selected>Unknown</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Icon</label>
+            <select name="icon">
+              <option value="border">Border</option>
+              <option value="ferry">Ferry</option>
+              <option value="route">Route</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Sort Order</label>
+            <input type="number" name="sort_order" value="0">
+          </div>
+        </div>
+        <button type="submit" class="btn">Save Exit Route</button>
+      </form>
+    </details>
+
+    <% if (exitRoutes.length > 0) { %>
+      <table class="admin-table">
+        <thead><tr><th>ID</th><th>Title</th><th>Status</th><th>Active</th></tr></thead>
+        <tbody>
+          <% exitRoutes.forEach(function(r) { %>
+            <tr class="<%= r.active ? '' : 'row-inactive' %>">
+              <td><%= r.id %></td>
+              <td><%= r.title %></td>
+              <td><%= r.status %></td>
+              <td><%= r.active ? 'Yes' : 'No' %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
+
+</main>
+
+<%- include('../partials/footer') %>

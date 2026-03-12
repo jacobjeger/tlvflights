@@ -64,7 +64,7 @@ async function fetchDestinations(): Promise<ArkiaDestination[]> {
     return [];
   }
 
-  const destinations: ArkiaDestination[] = await response.json();
+  const destinations: ArkiaDestination[] = await response.json() as ArkiaDestination[];
 
   // Only keep destinations that include flights (FL)
   return destinations.filter(
@@ -104,7 +104,7 @@ async function fetchDatesForDestination(
     return [];
   }
 
-  const json: ArkiaDateResponse = await response.json();
+  const json: ArkiaDateResponse = await response.json() as ArkiaDateResponse;
   return json.OB_DATES || [];
 }
 
@@ -143,7 +143,7 @@ async function fetchSearchResults(
     return [];
   }
 
-  const json: ArkiaSearchResult = await response.json();
+  const json: ArkiaSearchResult = await response.json() as ArkiaSearchResult;
   return json.FLIGHTS || [];
 }
 

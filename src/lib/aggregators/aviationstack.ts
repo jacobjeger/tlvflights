@@ -176,7 +176,7 @@ export async function fetchAviationStackFlights(): Promise<Flight[]> {
         continue;
       }
 
-      const data = await response.json();
+      const data = await response.json() as any;
 
       if (data.error) {
         console.error(`[aviationstack] API error:`, data.error.message || data.error);
@@ -231,7 +231,7 @@ export async function fetchAviationStackFlights(): Promise<Flight[]> {
       const response = await fetch(`${API_BASE}/timetable?${params}`);
 
       if (!response.ok) continue;
-      const data = await response.json();
+      const data = await response.json() as any;
       if (data.error) continue;
 
       const results: TimetableFlight[] = data.data || [];

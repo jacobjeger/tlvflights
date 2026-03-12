@@ -115,7 +115,7 @@ async function fetchDestinations(
     return [];
   }
 
-  const data = await response.json();
+  const data = await response.json() as any;
   // Normalize: API may return an object with a destinations key or an array directly
   if (Array.isArray(data)) return data;
   if (data.destinations && Array.isArray(data.destinations)) return data.destinations;
@@ -154,7 +154,7 @@ async function fetchCalendar(
     return [];
   }
 
-  const data = await response.json();
+  const data = await response.json() as any;
   if (Array.isArray(data)) return data;
   if (data.dates && Array.isArray(data.dates)) return data.dates;
   if (data.calendar && Array.isArray(data.calendar)) return data.calendar;
@@ -216,7 +216,7 @@ async function fetchFlightsForDate(
     return [];
   }
 
-  const data = await listResponse.json();
+  const data = await listResponse.json() as any;
   if (Array.isArray(data)) return data;
   if (data.flights && Array.isArray(data.flights)) return data.flights;
   return [];

@@ -17,7 +17,7 @@ export async function runSync(): Promise<{ total: number; errors: string[] }> {
 
   try {
     // Dynamic imports to avoid circular dependencies
-    const airlines = await import('./airlines');
+    const airlines = await import('./airlines/index.js');
     const sources: Array<{ name: string; fetch: FetchFunction }> = [
       { name: 'israir', fetch: airlines.fetchIsrairFlights },
       { name: 'elal', fetch: airlines.fetchElAlFlights },
@@ -27,7 +27,7 @@ export async function runSync(): Promise<{ total: number; errors: string[] }> {
 
     // Load aggregator sources
     try {
-      const aggregators = await import('./aggregators');
+      const aggregators = await import('./aggregators/index.js');
       const env = process.env;
       if (env['AMADEUS_CLIENT_ID']) {
         sources.push({ name: 'amadeus', fetch: aggregators.fetchAmadeusFlights });

@@ -27,7 +27,7 @@ async function getAccessToken(): Promise<string> {
     throw new Error(`Amadeus auth failed: ${response.status}`);
   }
 
-  const data = await response.json();
+  const data = await response.json() as any;
   accessToken = data.access_token;
   tokenExpiry = Date.now() + (data.expires_in - 60) * 1000;
   return accessToken!;
@@ -76,7 +76,7 @@ export async function fetchAmadeusFlights(): Promise<Flight[]> {
           continue;
         }
 
-        const data = await response.json();
+        const data = await response.json() as any;
 
         if (data.data) {
           for (const offer of data.data) {

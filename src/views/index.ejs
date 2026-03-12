@@ -1,0 +1,311 @@
+<%- include('partials/head') %>
+
+<!-- HERO / HEADER -->
+<header class="hero">
+  <div class="container">
+    <h1>GET OUT OF ISRAEL</h1>
+    <p class="hero-sub">Emergency travel information hub &mdash; flights, border crossings, organized exits</p>
+    <% if (lastSync) { %>
+      <div class="sync-status">
+        Last updated: <span id="last-sync"><%= new Date(lastSync.completedAt).toLocaleString('en-GB', { timeZone: 'Asia/Jerusalem' }) %></span>
+        <button class="btn btn-sm" onclick="triggerRefresh()">Refresh</button>
+      </div>
+    <% } %>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- ============ SECTION 1: LIVE FLIGHTS ============ -->
+  <section id="flights" class="section">
+    <div class="section-header">
+      <h2>Live Flight Availability</h2>
+      <div class="stats">
+        <span class="stat"><strong><%= totalFlights %></strong> flights</span>
+        <span class="stat"><strong><%= totalDestinations %></strong> destinations</span>
+        <span class="stat"><strong><%= totalAirlines %></strong> airlines</span>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-group">
+        <label>Date</label>
+        <div class="chip-row" id="date-chips">
+          <button class="chip active" data-date="all">All Dates</button>
+          <% dates.slice(0, 14).forEach(function(d) { %>
+            <% const dt = new Date(d.date + 'T00:00:00'); %>
+            <% const dayName = dt.toLocaleDateString('en-US', { weekday: 'short' }); %>
+            <% const dayNum = dt.getDate(); %>
+            <% const monthName = dt.toLocaleDateString('en-US', { month: 'short' }); %>
+            <button class="chip" data-date="<%= d.date %>">
+              <%= dayName %> <%= dayNum %> <%= monthName %>
+              <span class="chip-count"><%= d.count %></span>
+            </button>
+          <% }); %>
+        </div>
+      </div>
+      <div class="filter-group">
+        <label>Airline</label>
+        <div class="chip-row" id="airline-chips">
+          <button class="chip active" data-airline="all">All Airlines</button>
+          <% airlines.forEach(function(a) { %>
+            <button class="chip airline-chip" data-airline="<%= a.code %>"><%= a.name %></button>
+          <% }); %>
+        </div>
+      </div>
+      <div class="filter-group">
+        <input type="text" id="search-input" class="search-box" placeholder="Search city, airport code, or airline...">
+      </div>
+    </div>
+
+    <!-- Flight grid -->
+    <div class="flight-grid" id="flight-grid">
+      <% if (flights.length === 0) { %>
+        <div class="empty-state">
+          <h3>No flights found</h3>
+          <p>Data is syncing from airline APIs. Check back shortly.</p>
+        </div>
+      <% } else { %>
+        <%
+          // Group by destination
+          const grouped = {};
+          flights.forEach(function(f) {
+            const key = f.destination;
+            if (!grouped[key]) grouped[key] = { city: f.destinationCity, dest: f.destination, flights: [] };
+            grouped[key].flights.push(f);
+          });
+          const groups = Object.values(grouped).sort(function(a, b) { return b.flights.length - a.flights.length; });
+        %>
+        <% groups.forEach(function(g) { %>
+          <div class="dest-card" data-dest="<%= g.dest %>" data-city="<%= g.city %>">
+            <div class="dest-header">
+              <span class="dest-flag"><%= getFlagForAirport(g.dest) %></span>
+              <h3><%= g.city || g.dest %></h3>
+              <span class="dest-code"><%= g.dest %></span>
+              <span class="dest-count"><%= g.flights.length %> flight<%= g.flights.length !== 1 ? 's' : '' %></span>
+            </div>
+            <div class="dest-flights">
+              <% g.flights.forEach(function(f) { %>
+                <div class="flight-row"
+                     data-date="<%= f.departureTime.slice(0,10) %>"
+                     data-airline="<%= f.airline %>"
+                     data-search="<%= (f.destinationCity + ' ' + f.destination + ' ' + f.airlineName + ' ' + f.flightNumber).toLowerCase() %>">
+                  <span class="flight-airline al-<%= f.airline.replace(/[^a-zA-Z0-9]/g, '') %>"><%= f.airlineName %></span>
+                  <span class="flight-number"><%= f.flightNumber %></span>
+                  <span class="flight-time">
+                    <% const dep = new Date(f.departureTime); %>
+                    <%= dep.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) %>
+                    <% if (f.departureTime.includes('T') && !f.departureTime.includes('T00:00:00')) { %>
+                      <%= dep.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) %>
+                    <% } %>
+                  </span>
+                  <% if (f.seatsAvailable !== undefined && f.seatsAvailable !== null) { %>
+                    <span class="seats seats-<%= f.seatsAvailable <= 3 ? 'low' : f.seatsAvailable <= 9 ? 'med' : 'high' %>">
+                      <%= f.seatsAvailable %> seat<%= f.seatsAvailable !== 1 ? 's' : '' %>
+                    </span>
+                  <% } else { %>
+                    <span class="seats seats-unknown">Check</span>
+                  <% } %>
+                  <% if (f.price) { %>
+                    <span class="flight-price"><%= f.currency || '$' %><%= f.price %></span>
+                  <% } %>
+                  <% if (f.bookingUrl) { %>
+                    <a href="<%= f.bookingUrl %>" target="_blank" rel="noopener" class="btn btn-book">Book</a>
+                  <% } %>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        <% }); %>
+      <% } %>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 2: LISTINGS (Admin-posted) ============ -->
+  <% if (listings.length > 0) { %>
+  <section id="listings" class="section">
+    <div class="section-header">
+      <h2>Organized Exits & Charters</h2>
+      <p class="section-sub">Verified listings posted by the admin</p>
+    </div>
+    <div class="listings-grid">
+      <% listings.forEach(function(l) { %>
+        <div class="listing-card">
+          <div class="listing-header">
+            <h3><%= l.title %></h3>
+            <% if (l.spotsRemaining !== null) { %>
+              <span class="spots spots-<%= l.spotsRemaining <= 3 ? 'low' : 'ok' %>"><%= l.spotsRemaining %> spots left</span>
+            <% } %>
+          </div>
+          <% if (l.description) { %><p class="listing-desc"><%= l.description %></p><% } %>
+          <div class="listing-meta">
+            <% if (l.departureDate) { %><span>Departs: <strong><%= l.departureDate %></strong></span><% } %>
+            <% if (l.departurePoint) { %><span>From: <strong><%= l.departurePoint %></strong></span><% } %>
+            <% if (l.destination) { %><span>To: <strong><%= l.destination %></strong></span><% } %>
+            <% if (l.price) { %><span>Price: <strong><%= l.price %></strong></span><% } %>
+          </div>
+          <% if (l.contact) { %>
+            <div class="listing-contact">
+              <a href="<%= l.contact.startsWith('http') ? l.contact : (l.contact.includes('@') ? 'mailto:' + l.contact : 'tel:' + l.contact) %>"
+                 class="btn btn-contact" target="_blank">Contact</a>
+            </div>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- ============ SECTION 3: EXIT ROUTES ============ -->
+  <section id="exit-routes" class="section">
+    <div class="section-header">
+      <h2>Exit Routes by Land & Sea</h2>
+    </div>
+    <div class="routes-grid">
+      <% if (exitRoutes.length > 0) { %>
+        <% exitRoutes.forEach(function(r) { %>
+          <div class="route-card status-<%= r.status %>">
+            <div class="route-icon"><%= r.icon === 'border' ? '&#x1F6C3;' : r.icon === 'ferry' ? '&#x26F4;' : '&#x1F6E3;' %></div>
+            <h3><%= r.title %></h3>
+            <% if (r.subtitle) { %><p class="route-subtitle"><%= r.subtitle %></p><% } %>
+            <span class="route-status"><%= r.status === 'open' ? 'OPEN' : r.status === 'closed' ? 'CLOSED' : r.status === 'limited' ? 'LIMITED' : 'UNKNOWN' %></span>
+            <% if (r.description) { %><p class="route-desc"><%= r.description %></p><% } %>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <!-- Default static cards -->
+        <div class="route-card status-unknown">
+          <div class="route-icon">&#x1F6C3;</div>
+          <h3>Taba Border Crossing</h3>
+          <p class="route-subtitle">Israel &rarr; Egypt (Sinai)</p>
+          <span class="route-status">CHECK STATUS</span>
+          <p class="route-desc">Eilat/Taba crossing to Egypt. Passport required. Egyptian visa on arrival for most nationalities. Taxi to Taba available from Eilat.</p>
+        </div>
+        <div class="route-card status-unknown">
+          <div class="route-icon">&#x1F6C3;</div>
+          <h3>Allenby Bridge / King Hussein</h3>
+          <p class="route-subtitle">Israel &rarr; Jordan</p>
+          <span class="route-status">CHECK STATUS</span>
+          <p class="route-desc">Main crossing to Jordan near Jericho. Israeli exit fee applies. Jordanian visa required for some nationalities. Bus service available.</p>
+        </div>
+        <div class="route-card status-unknown">
+          <div class="route-icon">&#x1F6C3;</div>
+          <h3>Sheikh Hussein / Jordan River</h3>
+          <p class="route-subtitle">Israel &rarr; Jordan (North)</p>
+          <span class="route-status">CHECK STATUS</span>
+          <p class="route-desc">Northern crossing near Beit She'an. Less crowded than Allenby. Can drive personal vehicles across. Open Sunday-Thursday.</p>
+        </div>
+        <div class="route-card status-unknown">
+          <div class="route-icon">&#x26F4;</div>
+          <h3>Ferry from Haifa</h3>
+          <p class="route-subtitle">Israel &rarr; Cyprus / Greece / Turkey</p>
+          <span class="route-status">CHECK STATUS</span>
+          <p class="route-desc">Check for emergency ferry services from Haifa Port. Not regularly scheduled — may be activated during security situations.</p>
+        </div>
+      <% } %>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 4: AIRLINE STATUS ============ -->
+  <section id="airline-status" class="section">
+    <div class="section-header">
+      <h2>Airline Status Board</h2>
+      <% if (lastSync) { %>
+        <span class="section-updated">Updated: <%= new Date(lastSync.completedAt).toLocaleString('en-GB', { timeZone: 'Asia/Jerusalem' }) %></span>
+      <% } %>
+    </div>
+    <div class="status-grid">
+      <% if (airlineStatuses.length > 0) { %>
+        <% airlineStatuses.forEach(function(s) { %>
+          <div class="status-card">
+            <div class="status-airline al-<%= s.airline.replace(/[^a-zA-Z0-9]/g, '') %>"><%= s.airlineName %></div>
+            <div class="status-info">
+              <span class="status-badge status-flying">FLYING</span>
+              <span class="status-count"><%= s.flightCount %> flight<%= s.flightCount !== 1 ? 's' : '' %> listed</span>
+            </div>
+            <div class="status-updated">
+              Last seen: <%= new Date(s.lastSeen).toLocaleString('en-GB', { timeZone: 'Asia/Jerusalem', hour: '2-digit', minute: '2-digit' }) %>
+            </div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <div class="empty-state">
+          <p>No airline data yet. Syncing in progress...</p>
+        </div>
+      <% } %>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 5: FAQ ============ -->
+  <section id="faq" class="section">
+    <div class="section-header">
+      <h2>Essential Information</h2>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary>What documents do I need to leave Israel?</summary>
+        <div class="faq-body">
+          <ul>
+            <li><strong>By air:</strong> Valid passport (at least 6 months validity recommended). Israeli citizens also need a Teudat Zehut.</li>
+            <li><strong>To Jordan:</strong> Passport + Jordanian visa (available at border for many nationalities). Israeli exit stamp will be given.</li>
+            <li><strong>To Egypt:</strong> Passport + Egyptian visa (available on arrival at Taba for many nationalities, ~$25 USD). Sinai-only permit available for some.</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary>How much does it cost to cross the border?</summary>
+        <div class="faq-body">
+          <ul>
+            <li><strong>Allenby Bridge:</strong> Israeli exit tax ~107 NIS. Jordanian entry visa ~40 JOD.</li>
+            <li><strong>Sheikh Hussein:</strong> Similar costs to Allenby. Slightly faster processing.</li>
+            <li><strong>Taba:</strong> Israeli exit tax ~107 NIS. Egyptian visa ~$25 USD (Sinai permit may be free).</li>
+            <li><strong>Flights:</strong> Prices vary. Check individual airline sites for current fares.</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary>What are the border crossing hours?</summary>
+        <div class="faq-body">
+          <ul>
+            <li><strong>Taba:</strong> Sunday-Thursday 8:00-20:00, Friday-Saturday 8:00-15:00 (may vary during emergencies).</li>
+            <li><strong>Allenby Bridge:</strong> Sunday-Thursday 8:00-21:00 (hours may be restricted).</li>
+            <li><strong>Sheikh Hussein:</strong> Sunday-Thursday 6:30-22:00, Friday-Saturday 8:00-20:00.</li>
+          </ul>
+          <p><strong>Note:</strong> Hours may change during security situations. Verify before traveling.</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary>Tips for getting out quickly</summary>
+        <div class="faq-body">
+          <ul>
+            <li>Book flexible tickets &mdash; one-way flights are often available last-minute.</li>
+            <li>Check smaller airlines (Air Haifa, Arkia) as they may have seats when El Al is full.</li>
+            <li>Taba crossing is often the fastest land route out &mdash; taxis available from Eilat.</li>
+            <li>Keep your passport and documents ready at all times.</li>
+            <li>Join Telegram/WhatsApp groups for real-time border crossing updates.</li>
+            <li>Consider connecting flights through Amman, Istanbul, or Larnaca if direct flights are full.</li>
+          </ul>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary>What if I don't have a valid passport?</summary>
+        <div class="faq-body">
+          <p>Visit the nearest Interior Ministry (Misrad HaPnim) office for emergency passport services. During security situations, expedited processing may be available. Bring ID photos and your Teudat Zehut. Some countries accept laissez-passer documents for entry &mdash; contact your destination's embassy.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+</main>
+
+<!-- Quick nav -->
+<nav class="quick-nav">
+  <a href="#flights">Flights</a>
+  <a href="#listings">Exits</a>
+  <a href="#exit-routes">Borders</a>
+  <a href="#airline-status">Airlines</a>
+  <a href="#faq">FAQ</a>
+</nav>
+
+<%- include('partials/footer') %>

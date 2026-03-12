@@ -66,7 +66,7 @@ async function fetchDestinations(): Promise<Map<string, string>> {
       return cityMap;
     }
 
-    const destinations: ElAlDestination[] = await response.json();
+    const destinations: ElAlDestination[] = await response.json() as ElAlDestination[];
 
     for (const dest of destinations) {
       if (dest.iata) {
@@ -124,7 +124,7 @@ export async function fetchElAlFlights(): Promise<Flight[]> {
       return flights;
     }
 
-    const json: ElAlFlightsResponse = await flightsResponse.json();
+    const json: ElAlFlightsResponse = await flightsResponse.json() as ElAlFlightsResponse;
 
     if (!json.flightsFromIsrael || json.flightsFromIsrael.length === 0) {
       console.warn('[elal] No flights found in response');
