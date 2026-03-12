@@ -1,5 +1,4 @@
 import { Flight } from '../types';
-import { v4 as uuidv4 } from 'uuid';
 
 // Free plan uses HTTP; paid plans can use HTTPS
 const API_BASE = process.env.AVIATIONSTACK_HTTPS === 'true'
