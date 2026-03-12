@@ -28,6 +28,11 @@ export async function runSync(): Promise<{ total: number; errors: string[] }> {
     // Try loading aggregator sources
     try {
       const aggregators = await import('./aggregators');
+      console.log('[sync] Aggregator env vars:', {
+        amadeus: !!process.env.AMADEUS_CLIENT_ID,
+        kiwi: !!process.env.KIWI_API_KEY,
+        aviationstack: !!process.env.AVIATIONSTACK_API_KEY,
+      });
       if (process.env.AMADEUS_CLIENT_ID) {
         sources.push({ name: 'amadeus', fetch: aggregators.fetchAmadeusFlights });
       }
@@ -37,8 +42,8 @@ export async function runSync(): Promise<{ total: number; errors: string[] }> {
       if (process.env.AVIATIONSTACK_API_KEY) {
         sources.push({ name: 'aviationstack', fetch: aggregators.fetchAviationStackFlights });
       }
-    } catch {
-      console.log('[sync] Aggregator modules not available');
+    } catch (err) {
+      console.error('[sync] Aggregator modules not available:', err);
     }
 
     // Fetch from all sources in parallel
