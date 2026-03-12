@@ -140,19 +140,15 @@ export async function fetchIsrairFlights(): Promise<Flight[]> {
     maxDate.setDate(maxDate.getDate() + 14);
     const maxDateStr = maxDate.toISOString().slice(0, 10);
 
-    // Collect unique available dates from the calendarMap (limited to 14 days)
-    const availableDates = new Set<string>();
-    for (const date of Object.keys(calendarMap)) {
-      if (date <= maxDateStr) {
-        availableDates.add(date);
-      }
-    }
+    // calendarMap: keys are dates, values are arrays of destination codes
+    // Only create entries for specific destination+date combos that exist
+    for (const [date, destinations] of Object.entries(calendarMap)) {
+      if (date > maxDateStr) continue;
 
-    // Create a flight entry for each destination x available date
-    for (const destination of destLocations) {
-      const cityName = getCityName(destination);
-
-      for (const date of Array.from(availableDates)) {
+      const destList = Array.isArray(destinations) ? destinations : [];
+      for (const destination of destList) {
+        if (!destination || typeof destination !== 'string') continue;
+        const cityName = getCityName(destination);
         const flightId = `6H_${destination}_${date}`;
 
         flights.push({

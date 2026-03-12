@@ -18,8 +18,13 @@ const BASE_URL = 'https://www.arkia.co.il/api/forward/Search';
 const CULTURE_ID = '1'; // English
 
 const COMMON_HEADERS: Record<string, string> = {
-  adrum: 'isAjax:true',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+  'Accept': 'application/json, text/plain, */*',
+  'Accept-Language': 'en-US,en;q=0.9,he;q=0.8',
+  'Referer': 'https://www.arkia.co.il/en/flights',
+  'Origin': 'https://www.arkia.co.il',
   'content-type': 'application/json',
+  adrum: 'isAjax:true',
 };
 
 interface ArkiaDestination {
