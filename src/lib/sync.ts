@@ -1,5 +1,7 @@
 import { upsertFlights, logSync } from './db';
 import { Flight } from './types';
+import { fetchIsrairFlights, fetchElAlFlights, fetchArkiaFlights, fetchAirHaifaFlights } from './airlines/index';
+import { fetchAmadeusFlights, fetchKiwiFlights, fetchAviationStackFlights } from './aggregators/index';
 
 type FetchFunction = () => Promise<Flight[]>;
 
@@ -16,30 +18,21 @@ export async function runSync(): Promise<{ total: number; errors: string[] }> {
   let total = 0;
 
   try {
-    // Dynamic imports to avoid circular dependencies
-    const airlines = await import('./airlines/index.js');
     const sources: Array<{ name: string; fetch: FetchFunction }> = [
-      { name: 'israir', fetch: airlines.fetchIsrairFlights },
-      { name: 'elal', fetch: airlines.fetchElAlFlights },
-      { name: 'arkia', fetch: airlines.fetchArkiaFlights },
-      { name: 'airhaifa', fetch: airlines.fetchAirHaifaFlights },
+      { name: 'israir', fetch: fetchIsrairFlights },
+      { name: 'elal', fetch: fetchElAlFlights },
+      { name: 'arkia', fetch: fetchArkiaFlights },
+      { name: 'airhaifa', fetch: fetchAirHaifaFlights },
     ];
 
-    // Load aggregator sources
-    try {
-      const aggregators = await import('./aggregators/index.js');
-      const env = process.env;
-      if (env['AMADEUS_CLIENT_ID']) {
-        sources.push({ name: 'amadeus', fetch: aggregators.fetchAmadeusFlights });
-      }
-      if (env['KIWI_API_KEY']) {
-        sources.push({ name: 'kiwi', fetch: aggregators.fetchKiwiFlights });
-      }
-      // Always load aviationstack — let the module handle its own key check
-      sources.push({ name: 'aviationstack', fetch: aggregators.fetchAviationStackFlights });
-    } catch (err) {
-      console.error('[sync] Aggregator modules not available:', err);
+    const env = process.env;
+    if (env['AMADEUS_CLIENT_ID']) {
+      sources.push({ name: 'amadeus', fetch: fetchAmadeusFlights });
     }
+    if (env['KIWI_API_KEY']) {
+      sources.push({ name: 'kiwi', fetch: fetchKiwiFlights });
+    }
+    sources.push({ name: 'aviationstack', fetch: fetchAviationStackFlights });
 
     // Fetch from all sources in parallel
     const results = await Promise.allSettled(
