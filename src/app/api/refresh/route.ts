@@ -4,14 +4,14 @@ export const dynamic = 'force-dynamic';
 
 export async function POST() {
   try {
-    // The sync module will be created separately at src/lib/sync.ts
-    // Once available, uncomment the following:
-    // const { runSync } = await import('@/lib/sync');
-    // await runSync();
+    const { runSync } = await import('@/lib/sync');
+    const result = await runSync();
 
     return NextResponse.json({
       success: true,
-      message: 'Sync triggered successfully',
+      message: 'Sync completed',
+      flightsStored: result.total,
+      errors: result.errors,
     });
   } catch (error) {
     console.error('Error triggering sync:', error);
