@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST() {
   try {
-    const removed = clearAllFlights();
+    const removed = await clearAllFlights();
     return NextResponse.json({
       success: true,
       message: `Cleared ${removed} flights from database`,

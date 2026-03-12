@@ -10,13 +10,13 @@ export async function GET(request: NextRequest) {
     const date = searchParams.get('date') || undefined;
     const airline = searchParams.get('airline') || undefined;
 
-    let flights = getFlights(origin, date);
+    let flights = await getFlights(origin, date);
 
     if (airline) {
       flights = flights.filter((f) => f.airline === airline);
     }
 
-    const lastSync = getLastSync();
+    const lastSync = await getLastSync();
 
     return NextResponse.json({
       flights,

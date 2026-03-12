@@ -50,13 +50,13 @@ export async function runSync(): Promise<{ total: number; errors: string[] }> {
           const flights = await source.fetch();
           const duration = Date.now() - startTime;
           console.log(`[sync] ${source.name}: ${flights.length} flights (${duration}ms)`);
-          logSync(source.name, 'success', flights.length);
+          await logSync(source.name, 'success', flights.length);
           return { name: source.name, flights };
         } catch (error) {
           const duration = Date.now() - startTime;
           const message = error instanceof Error ? error.message : String(error);
           console.error(`[sync] ${source.name} failed (${duration}ms):`, message);
-          logSync(source.name, 'error', 0, message);
+          await logSync(source.name, 'error', 0, message);
           errors.push(`${source.name}: ${message}`);
           return { name: source.name, flights: [] };
         }
@@ -75,7 +75,7 @@ export async function runSync(): Promise<{ total: number; errors: string[] }> {
     const deduped = deduplicateFlights(allFlights);
 
     if (deduped.length > 0) {
-      upsertFlights(deduped);
+      await upsertFlights(deduped);
     }
     total = deduped.length;
 

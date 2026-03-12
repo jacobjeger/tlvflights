@@ -9,18 +9,18 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "better-sqlite3": "^12.6.2",
     "cheerio": "^1.2.0",
     "next": "14.2.35",
     "node-cron": "^4.2.1",
+    "pg": "^8.20.0",
     "react": "^18",
     "react-dom": "^18",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
     "@types/node-cron": "^3.0.11",
+    "@types/pg": "^8.18.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/uuid": "^10.0.0",
