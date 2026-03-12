@@ -2,7 +2,7 @@
  * El Al (LY) API client.
  *
  * BLOCKED by Akamai Bot Manager from server-side.
- * Requires a proxy service (ZenRows or ScrapingBee) to bypass.
+ * Requires a proxy service to bypass.
  * Returns empty array if no proxy is configured.
  */
 
@@ -18,30 +18,6 @@ const COMMON_HEADERS: Record<string, string> = {
   Accept: 'application/json, text/plain, */*',
   Referer: 'https://www.elal.com/eng/seat-availability?d=0',
 };
-
-interface ElAlFlight {
-  flightNumber?: string;
-  departureTime?: string;
-  arrivalTime?: string;
-  destination?: string;
-  origin?: string;
-  seatCount?: number;
-  date?: string;
-}
-
-interface ElAlFlightsResponse {
-  dateRange?: {
-    dates?: string[];
-  };
-  flightsFromIsrael?: ElAlFlight[];
-}
-
-interface ElAlDestination {
-  iata?: string;
-  name?: string;
-  city?: string;
-  country?: string;
-}
 
 function buildBookingUrl(destination: string): string {
   return (
@@ -66,11 +42,13 @@ async function fetchDestinations(): Promise<Map<string, string>> {
       return cityMap;
     }
 
-    const destinations: ElAlDestination[] = await response.json() as ElAlDestination[];
+    const destinations = await response.json() as any[];
 
     for (const dest of destinations) {
-      if (dest.iata) {
-        cityMap.set(dest.iata, dest.city || dest.name || dest.iata);
+      const iata = dest.iata || dest.Iata || dest.IATA || dest.code || dest.Code;
+      const city = dest.city || dest.City || dest.name || dest.Name || iata;
+      if (iata) {
+        cityMap.set(iata, city);
       }
     }
   } catch (error) {
@@ -81,20 +59,47 @@ async function fetchDestinations(): Promise<Map<string, string>> {
 }
 
 /**
+ * Get a field value from an object trying multiple casing variants.
+ */
+function getField(obj: any, ...keys: string[]): any {
+  for (const key of keys) {
+    if (obj[key] !== undefined) return obj[key];
+  }
+  return undefined;
+}
+
+/**
  * Parse El Al date string (DD.MM) into ISO date for the current or next year.
  */
 function parseElAlDate(dateStr: string): string {
-  const [day, month] = dateStr.split('.');
-  const now = new Date();
-  let year = now.getFullYear();
+  if (!dateStr) return '';
 
-  // If the month is before the current month, assume next year
-  const monthNum = parseInt(month, 10);
-  if (monthNum < now.getMonth() + 1) {
-    year += 1;
+  // Already ISO format (YYYY-MM-DD or with time)
+  if (dateStr.includes('-') && dateStr.length >= 10) {
+    return dateStr.slice(0, 10);
   }
 
-  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  // DD.MM format
+  if (dateStr.includes('.')) {
+    const [day, month] = dateStr.split('.');
+    const now = new Date();
+    let year = now.getFullYear();
+    const monthNum = parseInt(month, 10);
+    if (monthNum < now.getMonth() + 1) {
+      year += 1;
+    }
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+
+  // DD/MM/YYYY or similar
+  if (dateStr.includes('/')) {
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    }
+  }
+
+  return '';
 }
 
 export async function fetchElAlFlights(): Promise<Flight[]> {
@@ -124,51 +129,88 @@ export async function fetchElAlFlights(): Promise<Flight[]> {
       return flights;
     }
 
-    const json: ElAlFlightsResponse = await flightsResponse.json() as ElAlFlightsResponse;
+    const raw = await flightsResponse.json() as any;
 
-    if (!json.flightsFromIsrael || json.flightsFromIsrael.length === 0) {
-      console.warn('[elal] No flights found in response');
+    // Log the top-level response keys for debugging
+    console.log('[elal] Response top-level keys:', Object.keys(raw).join(', '));
+
+    // Try to find the flights array in the response
+    const flightsArray: any[] =
+      raw.flightsFromIsrael ||
+      raw.FlightsFromIsrael ||
+      raw.flights ||
+      raw.Flights ||
+      raw.data?.flightsFromIsrael ||
+      raw.data?.flights ||
+      (Array.isArray(raw) ? raw : null) ||
+      [];
+
+    if (!Array.isArray(flightsArray) || flightsArray.length === 0) {
+      console.warn('[elal] No flights array found in response');
+      console.log('[elal] Response preview:', JSON.stringify(raw).slice(0, 1000));
       return flights;
     }
 
-    const total = json.flightsFromIsrael.length;
-    const soldOut = json.flightsFromIsrael.filter(f => f.seatCount === 0).length;
-    const withSeats = json.flightsFromIsrael.filter(f => f.seatCount && f.seatCount > 0).length;
-    const noSeatInfo = json.flightsFromIsrael.filter(f => f.seatCount === undefined || f.seatCount === null).length;
-    console.log(
-      `[elal] Received ${total} entries: ${withSeats} with seats, ${soldOut} sold out, ${noSeatInfo} no seat info`,
-    );
+    // Log first flight object for debugging
+    console.log('[elal] Sample flight:', JSON.stringify(flightsArray[0]).slice(0, 800));
+    console.log('[elal] Total entries:', flightsArray.length);
 
-    // Log first flight object shape to debug missing fields
-    if (json.flightsFromIsrael.length > 0) {
-      console.log('[elal] Sample flight keys:', Object.keys(json.flightsFromIsrael[0]).join(', '));
-      console.log('[elal] Sample flight:', JSON.stringify(json.flightsFromIsrael[0]).slice(0, 500));
-    }
-    if (json.dateRange?.dates?.length) {
-      console.log(`[elal] dateRange has ${json.dateRange.dates.length} dates, sample: ${json.dateRange.dates.slice(0, 3).join(', ')}`);
+    // Try to find a global date range
+    const dateRange: string[] =
+      raw.dateRange?.dates || raw.DateRange?.Dates || raw.dates || [];
+    if (dateRange.length > 0) {
+      console.log(`[elal] dateRange: ${dateRange.length} dates, sample: ${dateRange.slice(0, 3).join(', ')}`);
     }
 
-    for (const f of json.flightsFromIsrael) {
-      // seatCount === 0 means explicitly sold out — skip those
-      // seatCount undefined/null means listed on seat availability page = available
-      if (f.seatCount === 0) {
+    for (const f of flightsArray) {
+      // Extract fields with flexible casing
+      const seatCount = getField(f, 'seatCount', 'SeatCount', 'seats', 'Seats', 'availableSeats', 'AvailableSeats');
+      const destination = getField(f, 'destination', 'Destination', 'dest', 'Dest', 'dst', 'arrivalStation', 'ArrivalStation') || '';
+      const flightNumber = getField(f, 'flightNumber', 'FlightNumber', 'flightNo', 'FlightNo', 'flight', 'Flight') || '';
+      const origin = getField(f, 'origin', 'Origin', 'org', 'departureStation', 'DepartureStation') || 'TLV';
+
+      // seatCount === 0 means explicitly sold out — skip
+      if (seatCount === 0) {
         continue;
       }
 
-      const destination = f.destination || '';
-      const flightNumber = f.flightNumber || '';
+      // Extract date from multiple possible fields
+      const rawDate = getField(f, 'date', 'Date', 'departureDate', 'DepartureDate', 'flightDate', 'FlightDate');
+      const rawDepTime = getField(f, 'departureTime', 'DepartureTime', 'depTime', 'DepTime', 'std', 'STD');
+      const rawArrTime = getField(f, 'arrivalTime', 'ArrivalTime', 'arvTime', 'ArvTime', 'sta', 'STA');
 
-      // Try multiple date sources: f.date (DD.MM), departureTime as ISO, or dateRange dates
       let date = '';
-      if (f.date) {
-        date = parseElAlDate(f.date);
-      } else if (f.departureTime && f.departureTime.includes('-')) {
-        // departureTime might be a full ISO date string
-        date = f.departureTime.slice(0, 10);
+      if (rawDate) {
+        date = parseElAlDate(String(rawDate));
+      } else if (rawDepTime && String(rawDepTime).includes('-')) {
+        // departureTime might be a full ISO datetime
+        date = String(rawDepTime).slice(0, 10);
       }
 
-      // Skip flights with no valid date — they produce invalid timestamps
+      // If still no date, skip (can't create valid flight record)
       if (!date) continue;
+
+      // Build departure/arrival times
+      let departureTime = `${date}T00:00:00.000Z`;
+      if (rawDepTime) {
+        const depStr = String(rawDepTime);
+        if (depStr.includes('T')) {
+          // Already ISO format
+          departureTime = depStr;
+        } else if (depStr.match(/^\d{2}:\d{2}/)) {
+          departureTime = `${date}T${depStr}:00.000Z`;
+        }
+      }
+
+      let arrivalTime: string | undefined;
+      if (rawArrTime) {
+        const arrStr = String(rawArrTime);
+        if (arrStr.includes('T')) {
+          arrivalTime = arrStr;
+        } else if (arrStr.match(/^\d{2}:\d{2}/)) {
+          arrivalTime = `${date}T${arrStr}:00.000Z`;
+        }
+      }
 
       const flightId = `LY_${flightNumber || destination}_${date}`;
 
@@ -177,23 +219,21 @@ export async function fetchElAlFlights(): Promise<Flight[]> {
         flightNumber,
         airline: 'LY',
         airlineName: 'El Al',
-        origin: f.origin || 'TLV',
+        origin,
         destination,
         destinationCity: cityMap.get(destination) || destination,
-        departureTime: f.departureTime
-          ? `${date}T${f.departureTime}:00.000Z`
-          : `${date}T00:00:00.000Z`,
-        arrivalTime: f.arrivalTime
-          ? `${date}T${f.arrivalTime}:00.000Z`
-          : undefined,
-        seatsAvailable: f.seatCount,
+        departureTime,
+        arrivalTime,
+        seatsAvailable: typeof seatCount === 'number' ? seatCount : undefined,
         source: 'elal',
         bookingUrl: buildBookingUrl(destination),
         lastSeen: now,
       });
     }
 
-    console.log(`[elal] Produced ${flights.length} available flight records`);
+    const withSeats = flights.filter(f => f.seatsAvailable && f.seatsAvailable > 0).length;
+    const noSeatInfo = flights.filter(f => f.seatsAvailable === undefined).length;
+    console.log(`[elal] Produced ${flights.length} flights (${withSeats} with seat counts, ${noSeatInfo} without)`);
     return flights;
   } catch (error) {
     console.error('[elal] Failed to fetch flights:', error);
