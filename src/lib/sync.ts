@@ -34,6 +34,9 @@ export async function runSync(): Promise<{ total: number; errors: string[] }> {
       if (process.env.KIWI_API_KEY) {
         sources.push({ name: 'kiwi', fetch: aggregators.fetchKiwiFlights });
       }
+      if (process.env.AVIATIONSTACK_API_KEY) {
+        sources.push({ name: 'aviationstack', fetch: aggregators.fetchAviationStackFlights });
+      }
     } catch {
       console.log('[sync] Aggregator modules not available');
     }
@@ -95,6 +98,7 @@ function deduplicateFlights(flights: Flight[]): Flight[] {
     airhaifa: 10,
     amadeus: 5,
     kiwi: 5,
+    aviationstack: 4,
   };
 
   for (const flight of flights) {
